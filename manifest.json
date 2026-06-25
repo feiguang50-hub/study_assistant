@@ -2,7 +2,7 @@
   "name": "行测刷题助手",
   "short_name": "刷题",
   "description": "碎片化刷题 + 知识点库 + 智能分析",
-  "start_url": "/study_assistant/src/index.html",
+  "start_url": "/study_assistant/index.html",
   "display": "standalone",
   "background_color": "#F9FAFB",
   "theme_color": "#4F46E5",
