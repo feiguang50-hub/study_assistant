@@ -758,6 +758,7 @@
         const timePerQuestion = { changshi: 40, yanyu: 50, shuliang: 60, panduan: 50, ziliao: 90 };
         // PRACTICE_COUNT 改为函数获取，读取用户设置
         const getPracticeCount = () => userData.settings?.practiceCount || 10;
+        // 每日挑战题数（与设置 UI 显示一致）
         const getDailyCount = () => { const map = {easy:5,normal:10,hard:20}; return map[userData.settings?.dailyDifficulty] || 10; }
 
         // 成就定义
@@ -1262,19 +1263,16 @@
         }
 
         function startDailyChallenge() {
-            // 根据难度决定每模块取题数
-            const diff = userData.settings?.dailyDifficulty || 'normal';
-            const modCounts = diff === 'easy' ? [2, 1, 1, 1, 1] :
-                              diff === 'hard' ? [4, 5, 4, 4, 4] :
-                              [3, 2, 2, 2, 2]; // normal: 11题
-            const [cs, yy, sl, pd, zl] = modCounts;
-            const allQuestions = [
-                ...questions.changshi.slice(0, Math.min(cs, questions.changshi.length)),
-                ...questions.yanyu.slice(0, Math.min(yy, questions.yanyu.length)),
-                ...questions.shuliang.slice(0, Math.min(sl, questions.shuliang.length)),
-                ...questions.panduan.slice(0, Math.min(pd, questions.panduan.length)),
-                ...questions.ziliao.slice(0, Math.min(zl, questions.ziliao.length))
-            ];
+            // 根据难度按比例从各模块取题，总题数与设置 UI 一致
+            const total = getDailyCount();
+            // 按常识:言语:数量:判断:资料 = 2:2:1:2:2 的比例分配
+            const ratios = [2, 2, 1, 2, 2]; // 和=9
+            const totalRatio = ratios.reduce((a, b) => a + b, 0);
+            const modLists = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
+            const allQuestions = modLists.map((mod, i) => {
+                const cnt = Math.max(1, Math.round(total * ratios[i] / totalRatio));
+                return questions[mod].slice(0, cnt);
+            }).flat();
             if (allQuestions.length === 0) {
                 alert('题库加载中，请稍后再试！');
                 return;
