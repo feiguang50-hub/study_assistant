@@ -66,7 +66,9 @@
             background: var(--card);
             border-bottom: 1px solid var(--border);
             overflow-x: auto;
+            scrollbar-width: none;
         }
+        .tab-bar::-webkit-scrollbar { display: none; }
         .tab {
             padding: 0.75rem 1rem;
             border: none;
@@ -76,6 +78,7 @@
             color: var(--text-secondary);
             font-weight: 500;
             border-bottom: 2px solid transparent;
+            font-size: 0.9rem;
         }
         .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         .card {
@@ -108,6 +111,11 @@
             font-size: 0.75rem;
             display: inline-block;
             margin-top: 0.5rem;
+        }
+        .module-card .bank-info {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
         }
         .module-card:nth-child(2) { background: linear-gradient(135deg, #10B981, #059669); }
         .module-card:nth-child(3) { background: linear-gradient(135deg, #F59E0B, #D97706); }
@@ -189,6 +197,46 @@
             font-size: 0.9rem;
             line-height: 1.5;
         }
+        .knowledge-popup {
+            background: var(--bg);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .knowledge-popup h4 { color: var(--primary); margin-bottom: 0.5rem; }
+        .knowledge-popup code {
+            background: rgba(79,70,229,0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .action-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .action-btn.active { background: var(--warning); border-color: var(--warning); color: white; }
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -300,7 +348,34 @@
             padding: 2rem;
             color: var(--text-secondary);
         }
-        .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.5; }
+        .data-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .data-actions .btn {
+            flex: 1;
+            padding: 0.6rem;
+            font-size: 0.85rem;
+        }
+        .time-taken {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        .avg-time {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .avg-time-item { text-align: center; }
+        .avg-time-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        .avg-time-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .favorite-btn { background: none; border: none; cursor: pointer; font-size: 1.5rem; padding: 0; }
+        .favorite-btn.starred { color: #F59E0B; }
         @media (max-width: 480px) {
             .module-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -319,6 +394,7 @@
     <nav class="tab-bar">
         <button class="tab active" onclick="switchTab('home')">刷题</button>
         <button class="tab" onclick="switchTab('wrong')">错题本</button>
+        <button class="tab" onclick="switchTab('favorites')">收藏</button>
         <button class="tab" onclick="switchTab('stats')">统计</button>
         <button class="tab" onclick="switchTab('achievements')">成就</button>
     </nav>
@@ -352,32 +428,37 @@
                     <h3>常识判断</h3>
                     <p>法律·政治·经济·科技·历史</p>
                     <span class="count" id="changshi-count">0题已做</span>
+                    <div class="bank-info" id="changshi-bank">题库共 0 题</div>
                 </div>
                 <div class="module-card" onclick="startModule('yanyu')">
                     <h3>言语理解</h3>
                     <p>选词填空·语句表达·阅读理解</p>
                     <span class="count" id="yanyu-count">0题已做</span>
+                    <div class="bank-info" id="yanyu-bank">题库共 0 题</div>
                 </div>
                 <div class="module-card" onclick="startModule('shuliang')">
                     <h3>数量关系</h3>
                     <p>数学运算·数字推理</p>
                     <span class="count" id="shuliang-count">0题已做</span>
+                    <div class="bank-info" id="shuliang-bank">题库共 0 题</div>
                 </div>
                 <div class="module-card" onclick="startModule('panduan')">
                     <h3>判断推理</h3>
                     <p>图形·定义·类比·逻辑</p>
                     <span class="count" id="panduan-count">0题已做</span>
+                    <div class="bank-info" id="panduan-bank">题库共 0 题</div>
                 </div>
                 <div class="module-card" onclick="startModule('ziliao')">
                     <h3>资料分析</h3>
                     <p>统计图表·文字资料</p>
                     <span class="count" id="ziliao-count">0题已做</span>
+                    <div class="bank-info" id="ziliao-bank">题库共 0 题</div>
                 </div>
             </div>
 
             <div class="card" style="margin-top: 1.5rem;">
                 <h3 style="margin-bottom: 0.75rem;">📅 每日挑战</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">今天还没完成每日挑战哦！</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;" id="daily-status">今天还没完成每日挑战哦！</p>
                 <button class="btn btn-primary" onclick="startDailyChallenge()" style="width: 100%;">开始今日挑战</button>
             </div>
         </div>
@@ -386,7 +467,10 @@
         <div id="practice-view" style="display: none;">
             <div class="card">
                 <div class="question-header">
-                    <span id="module-name" style="font-weight: 600;">常识判断</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span id="module-name" style="font-weight: 600;">常识判断</span>
+                        <button class="favorite-btn" id="fav-btn" onclick="toggleFavorite()" title="收藏">☆</button>
+                    </div>
                     <span class="timer" id="timer">40</span>
                 </div>
                 <div class="progress-bar">
@@ -411,6 +495,15 @@
             </div>
         </div>
 
+        <!-- 收藏 -->
+        <div id="favorites-view" style="display: none;">
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">⭐ 收藏夹</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="fav-count-text">暂无收藏</p>
+                <div class="wrong-list" id="fav-list"></div>
+            </div>
+        </div>
+
         <!-- 统计页面 -->
         <div id="stats-view" style="display: none;">
             <div class="card">
@@ -430,11 +523,31 @@
                     </div>
                 </div>
 
+                <div class="avg-time" id="avg-time-section" style="display:none;">
+                    <div class="avg-time-item">
+                        <div class="avg-time-value" id="stat-avg-time">--</div>
+                        <div class="avg-time-label">平均用时/题</div>
+                    </div>
+                    <div class="avg-time-item">
+                        <div class="avg-time-value" id="stat-fastest">--</div>
+                        <div class="avg-time-label">最快用时</div>
+                    </div>
+                </div>
+
                 <h3 style="margin: 1.5rem 0 1rem;">各模块正确率</h3>
                 <div id="module-stats"></div>
 
                 <h3 style="margin: 1.5rem 0 1rem;">本周学习热力图</h3>
                 <div class="heat-map" id="heat-map"></div>
+
+                <h3 style="margin: 1.5rem 0 1rem;">数据管理</h3>
+                <div class="data-actions">
+                    <button class="btn btn-outline" onclick="exportData()">📤 导出数据</button>
+                    <label class="btn btn-outline" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center;">
+                        📥 导入数据
+                        <input type="file" accept=".json" style="display:none;" onchange="importData(this.files[0])">
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -475,29 +588,25 @@
                     <div class="stat-label">正确率</div>
                 </div>
             </div>
+            <div style="margin-top:1rem; font-size:0.85rem; color:var(--text-secondary);" id="complete-time-info"></div>
             <button class="btn btn-primary" onclick="closeCompleteModal()" style="width: 100%; margin-top: 1.5rem;">确定</button>
         </div>
     </div>
 
+    <!-- 知识点弹窗 -->
+    <div class="modal hidden" id="knowledge-modal" onclick="closeKnowledge(event)">
+        <div class="modal-content" style="max-width: 500px; text-align: left;" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">📖 知识点速查</h3>
+            <div id="knowledge-content" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; line-height: 1.7;"></div>
+            <button class="btn btn-outline" onclick="closeKnowledgeModal()" style="margin-top: 1rem; width: 100%;">关闭</button>
+        </div>
+    </div>
+
     <script>
-        // 题库（会从GitHub加载）
-        let questions = { changshi: [], yanyu: [], shuliang: [], panduan: [], ziliao: [] };
+        // ============ 配置 ============
         const moduleNames = { changshi: '常识判断', yanyu: '言语理解', shuliang: '数量关系', panduan: '判断推理', ziliao: '资料分析' };
         const timePerQuestion = { changshi: 40, yanyu: 50, shuliang: 60, panduan: 50, ziliao: 90 };
-
-        // 用户数据
-        let userData = {
-            totalQuestions: 0,
-            correctCount: 0,
-            modules: { changshi: { total: 0, correct: 0 }, yanyu: { total: 0, correct: 0 }, shuliang: { total: 0, correct: 0 }, panduan: { total: 0, correct: 0 }, ziliao: { total: 0, correct: 0 } },
-            wrongQuestions: [],
-            favorites: [],
-            notes: {},
-            history: [],
-            lastPracticeDate: null,
-            streak: 0,
-            badges: []
-        };
+        const PRACTICE_COUNT = 10; // 每次练习题数
 
         // 成就定义
         const badgeDefinitions = [
@@ -507,20 +616,65 @@
             { id: 'accuracy_80', name: '八成正确', desc: '单模块正确率达80%', icon: '🎯' },
             { id: 'total_100', name: '百题斩', desc: '累计完成100题', icon: '💯' },
             { id: 'total_500', name: '五百题王', desc: '累计完成500题', icon: '👑' },
-            { id: 'daily_complete', name: '今日任务', desc: '完成每日挑战', icon: '📅' }
+            { id: 'daily_complete', name: '今日任务', desc: '完成每日挑战', icon: '📅' },
+            { id: 'collector', name: '题库收集者', desc: '题库总量达100题', icon: '📚' }
         ];
 
-        // 状态
+        // 知识点库（按 tag 索引）
+        const knowledgeBase = {
+            // 资料分析
+            '增长率计算': '增长率 = (现期值 - 基期值) / 基期值 × 100%\n\n也可用：增长率 = 增长量 / 基期值',
+            '基期值计算': '基期值 = 现期值 / (1 + 增长率)\n           = 增长量 / 增长率',
+            '增长量计算': '增长量 = 现期值 - 基期值\n           = 基期值 × 增长率',
+            '比重计算': '比重 = 部分值 / 整体值 × 100%\n\n部分值 = 整体值 × 比重\n整体值 = 部分值 / 比重',
+            '比重变化判断': '部分增长率 > 整体增长率 → 比重上升\n部分增长率 < 整体增长率 → 比重下降\n部分增长率 = 整体增长率 → 比重不变',
+            '平均数计算': '平均数 = 总量 / 份数',
+            '平均数增长率': '平均数增长率 = (总量增长率 - 份数增长率) / (1 + 份数增长率)',
+            '隔年增长率': '隔年增长率 = q₁ + q₂ + q₁ × q₂\n\n注意：是两年增长率之和加乘积',
+            '年均增长': '年均增长量 = (末期值 - 初期值) / n\n年均增长率 = n√(末期值/初期值) - 1',
+            '百分点概念': '百分点 = 百分数之间的差值单位\n例：75% - 70% = 5个百分点',
+            '贸易顺差逆差': '贸易顺差 = 出口额 - 进口额（出口>进口）\n贸易逆差 = 进口额 - 出口额（进口>出口）',
+            '贡献率': '贡献率 = 部分增长量 / 整体增长量 × 100%',
+            '拉动增长': '拉动增长 = 部分增长量 / 整体基期值 × 100%\n（结果读作"百分点"）',
+            '利润率': '利润率 = 利润 / 收入 × 100%',
+            '翻番计算': '翻n番 = 原值 × 2^n\n例：翻3番 = 原值 × 8',
+            '人口自然增长率': '人口自然增长率 = (出生 - 死亡) / 年均人口 × 1000‰',
+            '倍数关系': 'A是B的几倍 = A / B\nA比B多几倍 = A / B - 1',
+            '基期比重': '基期比重 = (部分/整体) × (1+整体增长率)/(1+部分增长率)',
+            '比重增长量': '比重增长量 = 现期比重 - 基期比重\n（结果读作"百分点"）',
+            '复合运算': '多期增长：现期值 = 基期值 × (1+q₁) × (1+q₂) × ...'
+        };
+
+        // ============ 状态 ============
+        let questions = { changshi: [], yanyu: [], shuliang: [], panduan: [], ziliao: [] };
+        let userData = {
+            totalQuestions: 0,
+            correctCount: 0,
+            totalTimeMs: 0,
+            fastestTimeMs: null,
+            modules: { changshi: { total: 0, correct: 0 }, yanyu: { total: 0, correct: 0 }, shuliang: { total: 0, correct: 0 }, panduan: { total: 0, correct: 0 }, ziliao: { total: 0, correct: 0 } },
+            wrongQuestions: [],
+            favorites: [],
+            notes: {},
+            history: [],
+            lastPracticeDate: null,
+            streak: 0,
+            badges: [],
+            dailyCompletedDate: null
+        };
+
         let currentModule = null;
         let currentQuestions = [];
         let currentIndex = 0;
         let selectedAnswer = null;
         let timer = null;
         let timeLeft = 0;
+        let sessionStartTime = 0;
         let sessionCorrect = 0;
         let sessionTotal = 0;
+        let sessionTimes = [];
 
-        // 初始化
+        // ============ 初始化 ============
         async function init() {
             loadFromStorage();
             await loadQuestions();
@@ -529,9 +683,10 @@
             updateBadges();
             updateCountdown();
             checkStreak();
+            renderFavorites();
+            updateDailyStatus();
         }
 
-        // 加载题库
         async function loadQuestions() {
             const modules = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
             for (const mod of modules) {
@@ -545,18 +700,32 @@
                     console.log(`加载${mod}题库失败`);
                 }
             }
-            document.getElementById('changshi-count').textContent = `${userData.modules.changshi.total}题已做`;
-            document.getElementById('yanyu-count').textContent = `${userData.modules.yanyu.total}题已做`;
-            document.getElementById('shuliang-count').textContent = `${userData.modules.shuliang.total}题已做`;
-            document.getElementById('panduan-count').textContent = `${userData.modules.panduan.total}题已做`;
-            document.getElementById('ziliao-count').textContent = `${userData.modules.ziliao.total}题已做`;
+            updateModuleCards();
         }
 
-        // 本地存储
+        function updateModuleCards() {
+            const modules = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
+            for (const mod of modules) {
+                const countEl = document.getElementById(`${mod}-count`);
+                const bankEl = document.getElementById(`${mod}-bank`);
+                if (countEl) countEl.textContent = `${userData.modules[mod].total}题已做`;
+                if (bankEl) bankEl.textContent = `题库共 ${questions[mod].length} 题`;
+            }
+            // 检查题库收集者成就
+            const totalBank = modules.reduce((s, m) => s + questions[m].length, 0);
+            if (totalBank >= 100 && !userData.badges.includes('collector')) {
+                userData.badges.push('collector');
+                saveToStorage();
+                setTimeout(() => alert('🎉 解锁成就：📚 题库收集者（题库总量达100题）'), 500);
+            }
+        }
+
+        // ============ 存储 ============
         function loadFromStorage() {
             const saved = localStorage.getItem('study_assistant_data');
             if (saved) {
-                userData = { ...userData, ...JSON.parse(saved) };
+                const parsed = JSON.parse(saved);
+                userData = { ...userData, ...parsed };
             }
         }
 
@@ -564,62 +733,132 @@
             localStorage.setItem('study_assistant_data', JSON.stringify(userData));
         }
 
-        // 切换标签
+        // ============ 导出/导入 ============
+        function exportData() {
+            const blob = new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `study_data_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.totalQuestions !== undefined) {
+                        userData = { ...userData, ...data };
+                        saveToStorage();
+                        updateStats();
+                        updateHeatMap();
+                        updateBadges();
+                        updateModuleCards();
+                        renderFavorites();
+                        alert('✅ 数据导入成功！');
+                    } else {
+                        alert('❌ 文件格式不对');
+                    }
+                } catch (err) {
+                    alert('❌ 文件读取失败');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ============ 导航 ============
         function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('home-view').style.display = tab === 'home' ? 'block' : 'none';
-            document.getElementById('practice-view').style.display = tab === 'practice' ? 'block' : 'none';
-            document.getElementById('wrong-view').style.display = tab === 'wrong' ? 'block' : 'none';
-            document.getElementById('stats-view').style.display = tab === 'stats' ? 'block' : 'none';
-            document.getElementById('achievements-view').style.display = tab === 'achievements' ? 'block' : 'none';
+            document.querySelectorAll('.tab').forEach(t => {
+                if (event && t === event.target) t.classList.add('active');
+                else if (event) t.classList.remove('active');
+            });
+            if (!event) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+            }
+            const views = ['home', 'practice', 'wrong', 'favorites', 'stats', 'achievements'];
+            views.forEach(v => {
+                const el = document.getElementById(`${v}-view`);
+                if (el) el.style.display = v === tab ? 'block' : 'none';
+            });
             if (tab === 'wrong') renderWrongList();
+            if (tab === 'favorites') renderFavorites();
             if (tab === 'stats') renderStats();
             if (tab === 'achievements') renderBadges();
         }
 
-        // 开始模块练习
+        // ============ 练习 ============
         function startModule(module) {
             currentModule = module;
-            currentQuestions = shuffleArray([...questions[module]]).slice(0, 10);
+            const available = questions[module];
+            const count = Math.min(PRACTICE_COUNT, available.length);
+            currentQuestions = shuffleArray([...available]).slice(0, count);
+            if (currentQuestions.length === 0) {
+                alert('题库加载中或暂无题目，请稍后再试！');
+                return;
+            }
             currentIndex = 0;
             sessionCorrect = 0;
             sessionTotal = 0;
+            sessionTimes = [];
+            sessionStartTime = Date.now();
             switchTab('practice');
-            document.querySelector('.tab[onclick="switchTab(\'home\')"]').classList.remove('active');
-            document.querySelector('.tab[onclick="switchTab(\'practice\')"]') || document.getElementById('home-view').insertAdjacentHTML('beforebegin', '<button class="tab active" onclick="switchTab(\'practice\')">练习中</button>');
+            document.querySelector('.tab[onclick*="home"]').classList.remove('active');
+            const practiceTab = document.querySelector('.tab[onclick*="practice"]') || (() => {
+                const tab = document.createElement('button');
+                tab.className = 'tab active';
+                tab.textContent = '练习中';
+                tab.onclick = () => { switchTab('practice'); };
+                document.querySelector('.tab-bar').appendChild(tab);
+                return tab;
+            })();
+            practiceTab.classList.add('active');
             showQuestion();
         }
 
-        // 开始每日挑战
         function startDailyChallenge() {
-            const allQuestions = shuffleArray([
+            const allQuestions = [
                 ...questions.changshi.slice(0, 4),
                 ...questions.yanyu.slice(0, 5),
                 ...questions.shuliang.slice(0, 3),
                 ...questions.panduan.slice(0, 4),
                 ...questions.ziliao.slice(0, 4)
-            ]);
+            ];
+            if (allQuestions.length === 0) {
+                alert('题库加载中，请稍后再试！');
+                return;
+            }
             currentModule = 'daily';
-            currentQuestions = allQuestions;
+            currentQuestions = shuffleArray(allQuestions);
             currentIndex = 0;
             sessionCorrect = 0;
             sessionTotal = 0;
+            sessionTimes = [];
+            sessionStartTime = Date.now();
             switchTab('practice');
             document.getElementById('module-name').textContent = '每日挑战';
             showQuestion();
         }
 
-        // 显示题目
         function showQuestion() {
             if (currentIndex >= currentQuestions.length) {
                 showComplete();
                 return;
             }
             const q = currentQuestions[currentIndex];
-            document.getElementById('module-name').textContent = currentModule === 'daily' ? '每日挑战' : moduleNames[currentModule];
+            const modName = currentModule === 'daily' ? '每日挑战' : moduleNames[currentModule];
+            document.getElementById('module-name').textContent = modName;
             document.getElementById('question-text').textContent = `${currentIndex + 1}. ${q.question}`;
-            document.getElementById('progress-fill').style.width = `${((currentIndex) / currentQuestions.length) * 100}%`;
+            document.getElementById('progress-fill').style.width = `${(currentIndex / currentQuestions.length) * 100}%`;
+
+            // 收藏状态
+            const isFav = userData.favorites.some(f => f.id === q.id || f.qid === `${currentModule}_${currentIndex}`);
+            document.getElementById('fav-btn').textContent = isFav ? '★' : '☆';
+            document.getElementById('fav-btn').classList.toggle('starred', isFav);
+
             const optionsHtml = q.options.map((opt, i) => `
                 <div class="option" onclick="selectOption(${i})">
                     <span class="option-letter">${String.fromCharCode(65 + i)}</span>
@@ -629,35 +868,40 @@
             document.getElementById('options').innerHTML = optionsHtml;
             document.getElementById('explanation-box').style.display = 'none';
             document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').textContent = '提交答案';
+            document.getElementById('submit-btn').onclick = submitAnswer;
             selectedAnswer = null;
             startTimer();
         }
 
-        // 选择选项
         function selectOption(index) {
-            document.querySelectorAll('.option').forEach((el, i) => {
-                el.classList.toggle('selected', i === index);
-            });
+            document.querySelectorAll('.option').forEach((el, i) => el.classList.toggle('selected', i === index));
             selectedAnswer = index;
             document.getElementById('submit-btn').disabled = false;
         }
 
-        // 提交答案
         function submitAnswer() {
             if (selectedAnswer === null) return;
             clearInterval(timer);
+            const timeSpent = (timePerQuestion[currentModule] || 40) - timeLeft;
+            sessionTimes.push(timeSpent);
+
             const q = currentQuestions[currentIndex];
             const isCorrect = selectedAnswer === q.answer;
             sessionTotal++;
             if (isCorrect) sessionCorrect++;
-            // 更新统计
+
             if (currentModule !== 'daily') {
                 userData.modules[currentModule].total++;
                 if (isCorrect) userData.modules[currentModule].correct++;
             }
             userData.totalQuestions++;
             if (isCorrect) userData.correctCount++;
-            // 记录错题
+            userData.totalTimeMs += timeSpent * 1000;
+            if (!userData.fastestTimeMs || timeSpent < userData.fastestTimeMs / 1000) {
+                userData.fastestTimeMs = timeSpent * 1000;
+            }
+
             if (!isCorrect) {
                 userData.wrongQuestions.push({
                     id: q.id || `${currentModule}_${currentIndex}`,
@@ -671,41 +915,44 @@
                     timestamp: Date.now()
                 });
             }
-            // 更新历史
-            userData.history.push({
-                date: new Date().toISOString(),
-                module: currentModule,
-                correct: isCorrect
-            });
+
+            userData.history.push({ date: new Date().toISOString(), module: currentModule, correct: isCorrect, timeMs: timeSpent * 1000 });
             saveToStorage();
+
             // 显示结果
             document.querySelectorAll('.option').forEach((el, i) => {
                 el.classList.add('disabled');
                 if (i === q.answer) el.classList.add('correct');
                 if (i === selectedAnswer && !isCorrect) el.classList.add('wrong');
             });
+
+            let extraBtns = '';
+            if (q.knowledge) {
+                extraBtns += `<button class="action-btn" onclick="showKnowledge('${q.knowledge.replace(/'/g, "\\'")}')">📖 ${q.knowledge}</button>`;
+            }
+            extraBtns += `<button class="action-btn" onclick="toggleFavorite(true)">${userData.favorites.some(f => f.id === q.id) ? '★ 已收藏' : '☆ 收藏'}</button>`;
+
             document.getElementById('explanation-box').innerHTML = `
                 <div class="explanation">
                     <strong>${isCorrect ? '✅ 正确！' : '❌ 错误'}</strong>
                     <p style="margin-top: 0.5rem;">${q.explanation || ''}</p>
+                    <div class="time-taken">用时：${timeSpent}秒</div>
                 </div>
+                <div class="action-bar">${extraBtns}</div>
             `;
             document.getElementById('explanation-box').style.display = 'block';
-            document.getElementById('submit-btn').textContent = currentIndex < currentQuestions.length - 1 ? '下一题' : '完成';
+            document.getElementById('submit-btn').textContent = currentIndex < currentQuestions.length - 1 ? '下一题 →' : '完成';
             document.getElementById('submit-btn').onclick = nextQuestion;
         }
 
-        // 下一题
         function nextQuestion() {
-            document.getElementById('submit-btn').textContent = '提交答案';
-            document.getElementById('submit-btn').onclick = submitAnswer;
             currentIndex++;
             showQuestion();
         }
 
-        // 计时器
+        // ============ 计时器 ============
         function startTimer() {
-            timeLeft = currentModule === 'daily' ? timePerQuestion[questions.changshi[0] ? 'changshi' : 'changshi'] : timePerQuestion[currentModule];
+            timeLeft = timePerQuestion[currentModule] || 40;
             updateTimerDisplay();
             timer = setInterval(() => {
                 timeLeft--;
@@ -720,39 +967,103 @@
 
         function updateTimerDisplay() {
             const el = document.getElementById('timer');
-            el.textContent = timeLeft;
+            el.textContent = timeLeft + 's';
             el.classList.remove('warning', 'danger');
             if (timeLeft <= 10) el.classList.add('danger');
             else if (timeLeft <= 20) el.classList.add('warning');
         }
 
-        // 完成练习
+        // ============ 完成 ============
         function showComplete() {
+            clearInterval(timer);
             const accuracy = sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 0;
+            const avgTime = sessionTimes.length > 0 ? Math.round(sessionTimes.reduce((a, b) => a + b, 0) / sessionTimes.length) : 0;
             document.getElementById('complete-total').textContent = sessionTotal;
             document.getElementById('complete-correct').textContent = sessionCorrect;
             document.getElementById('complete-accuracy').textContent = accuracy + '%';
+            document.getElementById('complete-time-info').textContent = sessionTimes.length > 0 ? `平均用时 ${avgTime}秒/题` : '';
             document.getElementById('complete-modal').classList.remove('hidden');
-            // 检查成就
+
+            // 每日挑战完成标记
+            if (currentModule === 'daily') {
+                const today = new Date().toISOString().split('T')[0];
+                userData.dailyCompletedDate = today;
+                saveToStorage();
+                updateDailyStatus();
+            }
             checkBadges();
         }
 
         function closeCompleteModal() {
             document.getElementById('complete-modal').classList.add('hidden');
+            // 移除练习中的tab按钮
+            const tabs = document.querySelectorAll('.tab-bar .tab');
+            tabs.forEach(t => { if (t.textContent === '练习中') t.remove(); });
             switchTab('home');
             updateStats();
+            updateModuleCards();
         }
 
-        // 退出练习
         function quitPractice() {
             if (confirm('确定退出吗？当前进度将被保存。')) {
                 clearInterval(timer);
+                const tabs = document.querySelectorAll('.tab-bar .tab');
+                tabs.forEach(t => { if (t.textContent === '练习中') t.remove(); });
                 switchTab('home');
                 updateStats();
             }
         }
 
-        // 错题本
+        // ============ 收藏 ============
+        function toggleFavorite(fromActionBar) {
+            const q = currentQuestions[currentIndex];
+            if (!q) return;
+            const fid = q.id || `${currentModule}_${currentIndex}`;
+            const idx = userData.favorites.findIndex(f => f.id === fid);
+            if (idx >= 0) {
+                userData.favorites.splice(idx, 1);
+            } else {
+                userData.favorites.push({ id: fid, module: currentModule, question: q.question, options: q.options, answer: q.answer, explanation: q.explanation, knowledge: q.knowledge });
+            }
+            saveToStorage();
+            if (fromActionBar) {
+                // 更新按钮文字
+                const btn = document.querySelector('#explanation-box .action-btn:nth-child(2)');
+                if (btn) btn.textContent = userData.favorites.some(f => f.id === fid) ? '★ 已收藏' : '☆ 收藏';
+            } else {
+                document.getElementById('fav-btn').textContent = userData.favorites.some(f => f.id === fid) ? '★' : '☆';
+                document.getElementById('fav-btn').classList.toggle('starred', userData.favorites.some(f => f.id === fid));
+            }
+        }
+
+        function renderFavorites() {
+            const list = document.getElementById('fav-list');
+            const text = document.getElementById('fav-count-text');
+            if (userData.favorites.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>暂无收藏，觉得好题就点 ☆ 收藏吧！</p></div>';
+                text.textContent = '暂无收藏';
+            } else {
+                text.textContent = `共 ${userData.favorites.length} 道收藏`;
+                list.innerHTML = userData.favorites.map((f, i) => `
+                    <div class="wrong-item">
+                        <div class="wrong-item-header">
+                            <strong>${f.question.substring(0, 50)}${f.question.length > 50 ? '...' : ''}</strong>
+                            <button onclick="removeFav(${i})" style="background:none;border:none;cursor:pointer;font-size:1rem;">🗑️</button>
+                        </div>
+                        <div class="wrong-item-module">${moduleNames[f.module] || '已收藏'}</div>
+                        ${f.knowledge ? `<span class="knowledge-tag">${f.knowledge}</span>` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeFav(idx) {
+            userData.favorites.splice(idx, 1);
+            saveToStorage();
+            renderFavorites();
+        }
+
+        // ============ 错题本 ============
         function renderWrongList() {
             const list = document.getElementById('wrong-list');
             const text = document.getElementById('wrong-count-text');
@@ -762,7 +1073,7 @@
             } else {
                 text.textContent = `共 ${userData.wrongQuestions.length} 道错题`;
                 list.innerHTML = userData.wrongQuestions.slice().reverse().map(w => `
-                    <div class="wrong-item" onclick="showWrongDetail('${w.id}')">
+                    <div class="wrong-item">
                         <div class="wrong-item-header">
                             <strong>${w.question.substring(0, 50)}${w.question.length > 50 ? '...' : ''}</strong>
                             <span style="color: var(--danger);">❌</span>
@@ -774,34 +1085,41 @@
             }
         }
 
-        function showWrongDetail(id) {
-            const w = userData.wrongQuestions.find(x => x.id === id);
-            if (!w) return;
-            alert(`题目：${w.question}\n\n正确答案：${String.fromCharCode(65 + w.answer)}\n\n解析：${w.explanation || '暂无'}`);
-        }
-
-        // 统计页面
+        // ============ 统计 ============
         function renderStats() {
             document.getElementById('stat-total').textContent = userData.totalQuestions;
             document.getElementById('stat-correct').textContent = userData.correctCount;
             document.getElementById('stat-accuracy').textContent = userData.totalQuestions > 0 ? Math.round((userData.correctCount / userData.totalQuestions) * 100) + '%' : '0%';
+
+            // 平均用时
+            const timeSection = document.getElementById('avg-time-section');
+            if (userData.totalTimeMs > 0) {
+                timeSection.style.display = 'flex';
+                const avgSec = Math.round(userData.totalTimeMs / userData.totalQuestions / 1000);
+                const fastestSec = userData.fastestTimeMs ? Math.round(userData.fastestTimeMs / 1000) : '--';
+                document.getElementById('stat-avg-time').textContent = avgSec + 's';
+                document.getElementById('stat-fastest').textContent = fastestSec + 's';
+            } else {
+                timeSection.style.display = 'none';
+            }
+
             const modulesHtml = Object.entries(moduleNames).map(([key, name]) => {
                 const m = userData.modules[key];
                 const acc = m.total > 0 ? Math.round((m.correct / m.total) * 100) : 0;
+                const color = acc >= 70 ? 'var(--success)' : acc >= 50 ? 'var(--warning)' : 'var(--danger)';
                 return `
                     <div style="margin-bottom: 0.75rem;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
                             <span>${name}</span>
-                            <span>${acc}%</span>
+                            <span>${acc}% <span style="font-size:0.7rem;color:var(--text-secondary)">(${m.correct}/${m.total})</span></span>
                         </div>
-                        <div class="progress-bar"><div class="progress-fill" style="width: ${acc}%; background: ${acc >= 70 ? 'var(--success)' : acc >= 50 ? 'var(--warning)' : 'var(--danger)'}"></div></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${acc}%; background: ${color}"></div></div>
                     </div>
                 `;
             }).join('');
             document.getElementById('module-stats').innerHTML = modulesHtml;
         }
 
-        // 热力图
         function updateHeatMap() {
             const map = document.getElementById('heat-map');
             const days = [];
@@ -822,7 +1140,15 @@
             }).join('');
         }
 
-        // 成就
+        function updateDailyStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const el = document.getElementById('daily-status');
+            if (el) {
+                el.textContent = userData.dailyCompletedDate === today ? '✅ 今日挑战已完成！' : '今天还没完成每日挑战哦！';
+            }
+        }
+
+        // ============ 成就 ============
         function renderBadges() {
             const grid = document.getElementById('badge-grid');
             grid.innerHTML = badgeDefinitions.map(b => {
@@ -844,27 +1170,28 @@
             if (userData.streak >= 7 && !userData.badges.includes('streak_7')) newBadges.push('streak_7');
             if (userData.totalQuestions >= 100 && !userData.badges.includes('total_100')) newBadges.push('total_100');
             if (userData.totalQuestions >= 500 && !userData.badges.includes('total_500')) newBadges.push('total_500');
-            if (userData.badges.length > 0 && !userData.badges.includes('daily_complete')) {
-                const today = new Date().toISOString().split('T')[0];
-                if (userData.history.some(h => h.date.startsWith(today))) {
-                    newBadges.push('daily_complete');
+            const today = new Date().toISOString().split('T')[0];
+            if (userData.dailyCompletedDate === today && !userData.badges.includes('daily_complete')) newBadges.push('daily_complete');
+            // 检查单模块80%正确率
+            Object.entries(userData.modules).forEach(([key, m]) => {
+                if (m.total >= 10 && (m.correct / m.total) >= 0.8 && !userData.badges.includes('accuracy_80')) {
+                    newBadges.push('accuracy_80');
                 }
-            }
+            });
             if (newBadges.length > 0) {
                 userData.badges.push(...newBadges);
                 saveToStorage();
-                setTimeout(() => alert(`🎉 解锁新成就：${newBadges.map(id => badgeDefinitions.find(b => b.id === id).name).join('、')}`), 500);
+                setTimeout(() => {
+                    alert(`🎉 解锁成就：${newBadges.map(id => badgeDefinitions.find(b => b.id === id).name).join('、')}`);
+                }, 500);
             }
         }
 
-        function updateBadges() {
-            renderBadges();
-        }
+        function updateBadges() { renderBadges(); }
 
-        // 打卡连续
         function checkStreak() {
             const today = new Date().toISOString().split('T')[0];
-            if (userData.lastPracticeDate !== today) {
+            if (userData.lastPracticeDate !== today && userData.totalQuestions > 0) {
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
                 if (userData.lastPracticeDate === yesterday.toISOString().split('T')[0]) {
@@ -879,7 +1206,6 @@
             }
         }
 
-        // 考试倒计时
         function updateCountdown() {
             const examDate = new Date('2026-11-24');
             const today = new Date();
@@ -888,20 +1214,40 @@
             document.getElementById('countdown-days').textContent = days;
         }
 
-        // 搜索
+        // ============ 知识点 ============
+        function showKnowledge(tag) {
+            const content = document.getElementById('knowledge-content');
+            const known = knowledgeBase[tag];
+            if (known) {
+                content.innerHTML = `<h4>📚 ${tag}</h4><pre style="white-space:pre-wrap;font-size:0.85rem;line-height:1.7;margin-top:0.5rem;">${known}</pre>`;
+            } else {
+                content.innerHTML = `<p style="color:var(--text-secondary)">暂无该知识点的详细内容，可以告诉我补充哦！</p>`;
+            }
+            document.getElementById('knowledge-modal').classList.remove('hidden');
+        }
+
+        function closeKnowledge(e) {
+            if (!e || e.target === document.getElementById('knowledge-modal')) closeKnowledgeModal();
+        }
+
+        function closeKnowledgeModal() {
+            document.getElementById('knowledge-modal').classList.add('hidden');
+        }
+
+        // ============ 搜索 ============
         function showSearch() {
             document.getElementById('search-modal').classList.remove('hidden');
             document.getElementById('search-input').focus();
         }
 
         function closeSearch(e) {
-            if (e.target === document.getElementById('search-modal')) {
-                closeSearchModal();
-            }
+            if (!e || e.target === document.getElementById('search-modal')) closeSearchModal();
         }
 
         function closeSearchModal() {
             document.getElementById('search-modal').classList.add('hidden');
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-results').innerHTML = '';
         }
 
         function searchQuestions(query) {
@@ -912,21 +1258,25 @@
             const results = [];
             Object.entries(questions).forEach(([mod, qs]) => {
                 qs.forEach(q => {
-                    if (q.question.includes(query) || (q.knowledge && q.knowledge.includes(query))) {
+                    if ((q.question && q.question.includes(query)) || (q.knowledge && q.knowledge.includes(query))) {
                         results.push({ ...q, module: mod });
                     }
                 });
             });
-            document.getElementById('search-results').innerHTML = results.slice(0, 10).map(r => `
-                <div class="wrong-item" onclick="alert('题目：${r.question}\n\n答案：${String.fromCharCode(65 + r.answer)}')">
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${moduleNames[r.module]}</div>
-                    <div>${r.question.substring(0, 60)}${r.question.length > 60 ? '...' : ''}</div>
-                    ${r.knowledge ? `<span class="knowledge-tag">${r.knowledge}</span>` : ''}
-                </div>
-            `).join('') || '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">未找到相关题目</p>';
+            if (results.length === 0) {
+                document.getElementById('search-results').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">未找到相关题目</p>';
+            } else {
+                document.getElementById('search-results').innerHTML = results.slice(0, 10).map(r => `
+                    <div class="wrong-item">
+                        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.25rem;">${moduleNames[r.module]}</div>
+                        <div>${r.question.substring(0, 60)}${r.question.length > 60 ? '...' : ''}</div>
+                        ${r.knowledge ? `<span class="knowledge-tag">${r.knowledge}</span>` : ''}
+                    </div>
+                `).join('');
+            }
         }
 
-        // 主题切换
+        // ============ 主题 ============
         function toggleTheme() {
             document.body.classList.toggle('dark');
             const btn = document.querySelector('.icon-btn');
@@ -934,7 +1284,7 @@
             localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
         }
 
-        // 工具函数
+        // ============ 工具 ============
         function shuffleArray(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
