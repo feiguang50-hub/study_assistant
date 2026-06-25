@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "description": "做题记录数据结构",
+  "fields": {
+    "lastUpdated": "ISO 8601 时间戳",
+    "totalQuestions": "总做题数",
+    "correctCount": "总正确数",
+    "modules": {
+      "changshi": { "total": 0, "correct": 0 },
+      "yanyu": { "total": 0, "correct": 0 },
+      "shuliang": { "total": 0, "correct": 0 },
+      "panduan": { "total": 0, "correct": 0 },
+      "ziliao": { "total": 0, "correct": 0 }
+    },
+    "wrongQuestions": [
+      {
+        "id": "题库中的唯一ID",
+        "module": "模块名",
+        "knowledge": "关联知识点",
+        "wrongAnswer": "用户选的答案",
+        "timestamp": "做题时间"
+      }
+    ],
+    "recentSessions": [
+      {
+        "date": "日期",
+        "module": "模块",
+        "count": "题数",
+        "correct": "正确数"
+      }
+    ]
+  }
+}
