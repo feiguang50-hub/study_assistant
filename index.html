@@ -851,7 +851,6 @@
             const modules = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
 
             // 1. 先尝试从网络加载（带超时）
-            let networkOk = false;
             const fetchWithTimeout = (url, ms) => {
                 return Promise.race([
                     fetch(url),
@@ -869,23 +868,22 @@
                     if (res.ok) {
                         const data = await res.json();
                         questions[mod] = data.questions || [];
-                        networkOk = true;
                     }
                 } catch (e) {
-                    // 网络失败或超时，使用内嵌数据兜底
+                    // 网络失败或超时，该模块留空，稍后用内嵌兜底
                 }
             }
 
-            // 2. 如果网络全挂了，用内嵌数据兜底（移动端常发生）
-            if (!networkOk) {
-                updateLoadingTip('使用离线题库…');
-                for (const mod of modules) {
-                    if (!questions[mod] || questions[mod].length === 0) {
-                        questions[mod] = EMBEDDED_QUESTIONS[mod] || [];
-                    }
+            // 2. 对每个空模块，用内嵌数据兜底（移动端常发生）
+            let usedFallback = false;
+            for (const mod of modules) {
+                if (!questions[mod] || questions[mod].length === 0) {
+                    questions[mod] = EMBEDDED_QUESTIONS[mod] || [];
+                    usedFallback = true;
                 }
             }
-            updateLoadingTip('准备就绪');
+            if (usedFallback) updateLoadingTip('使用离线题库…');
+            else updateLoadingTip('准备就绪');
             updateModuleCards();
         }
 
