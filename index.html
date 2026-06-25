@@ -622,27 +622,51 @@
 
         // 知识点库（按 tag 索引）
         const knowledgeBase = {
-            // 资料分析
-            '增长率计算': '增长率 = (现期值 - 基期值) / 基期值 × 100%\n\n也可用：增长率 = 增长量 / 基期值',
-            '基期值计算': '基期值 = 现期值 / (1 + 增长率)\n           = 增长量 / 增长率',
-            '增长量计算': '增长量 = 现期值 - 基期值\n           = 基期值 × 增长率',
-            '比重计算': '比重 = 部分值 / 整体值 × 100%\n\n部分值 = 整体值 × 比重\n整体值 = 部分值 / 比重',
+            // ===== 资料分析 =====
+            '增长率计算': '增长率 = (现期值 - 基期值) / 基期值 × 100%\n也可用：增长率 = 增长量 / 基期值',
+            '基期值计算': '基期值 = 现期值 / (1 + 增长率)\n          = 增长量 / 增长率',
+            '增长量计算': '增长量 = 现期值 - 基期值\n          = 基期值 × 增长率\n          = 现期值 × 增长率 / (1 + 增长率)',
+            '比重计算': '比重 = 部分值 / 整体值 × 100%\n部分值 = 整体值 × 比重\n整体值 = 部分值 / 比重',
             '比重变化判断': '部分增长率 > 整体增长率 → 比重上升\n部分增长率 < 整体增长率 → 比重下降\n部分增长率 = 整体增长率 → 比重不变',
-            '平均数计算': '平均数 = 总量 / 份数',
+            '平均数计算': '平均数 = 总量 / 份数\n总量 = 平均数 × 份数\n份数 = 总量 / 平均数',
             '平均数增长率': '平均数增长率 = (总量增长率 - 份数增长率) / (1 + 份数增长率)',
-            '隔年增长率': '隔年增长率 = q₁ + q₂ + q₁ × q₂\n\n注意：是两年增长率之和加乘积',
+            '隔年增长率': '隔年增长率 = q₁ + q₂ + q₁ × q₂\n注意：是两年增长率之和加乘积',
             '年均增长': '年均增长量 = (末期值 - 初期值) / n\n年均增长率 = n√(末期值/初期值) - 1',
-            '百分点概念': '百分点 = 百分数之间的差值单位\n例：75% - 70% = 5个百分点',
-            '贸易顺差逆差': '贸易顺差 = 出口额 - 进口额（出口>进口）\n贸易逆差 = 进口额 - 出口额（进口>出口）',
+            '百分点概念': '百分点 = 百分数之间的差值单位\n例：75% - 70% = 5个百分点\n注意：百分点 ≠ 百分率',
+            '贸易顺差逆差': '贸易顺差 = 出口额 - 进口额（出口>进口）\n贸易逆差 = 进口额 - 出口额（进口>出口）\n进出口总额 = 出口额 + 进口额',
             '贡献率': '贡献率 = 部分增长量 / 整体增长量 × 100%',
-            '拉动增长': '拉动增长 = 部分增长量 / 整体基期值 × 100%\n（结果读作"百分点"）',
+            '拉动增长': '拉动增长 = 部分增长量 / 整体基期值 × 100%\n结果读作"百分点"',
             '利润率': '利润率 = 利润 / 收入 × 100%',
-            '翻番计算': '翻n番 = 原值 × 2^n\n例：翻3番 = 原值 × 8',
-            '人口自然增长率': '人口自然增长率 = (出生 - 死亡) / 年均人口 × 1000‰',
-            '倍数关系': 'A是B的几倍 = A / B\nA比B多几倍 = A / B - 1',
+            '翻番计算': '翻n番 = 原值 × 2^n\n例：翻1番=2倍，翻2番=4倍，翻3番=8倍',
+            '人口自然增长率': '人口自然增长率 = (出生 - 死亡) / 年均人口 × 1000‰\n         = 人口出生率 - 人口死亡率',
+            '倍数关系': 'A是B的几倍 = A / B\nA比B多几倍 = A / B - 1\n（注意区分\"是几倍\"和\"多几倍\"）',
             '基期比重': '基期比重 = (部分/整体) × (1+整体增长率)/(1+部分增长率)',
-            '比重增长量': '比重增长量 = 现期比重 - 基期比重\n（结果读作"百分点"）',
-            '复合运算': '多期增长：现期值 = 基期值 × (1+q₁) × (1+q₂) × ...'
+            '比重增长量': '比重增长量 = 现期比重 - 基期比重\n结果读作"百分点"',
+            '复合运算': '多期增长：现期值 = 基期值 × (1+q₁) × (1+q₂) × ...',
+            // ===== 数量关系 =====
+            '工程问题': '工作量 = 效率 × 时间\n合作效率 = 各效率之和\n合作时间 = 工作量 / 合作效率',
+            '行程问题': '路程 = 速度 × 时间\n相遇问题：路程和 = 速度和 × 相遇时间\n追及问题：路程差 = 速度差 × 追及时间',
+            '利润问题': '利润率 = (售价-进价) / 进价 × 100%\n售价 = 进价 × (1+利润率)',
+            '数列规律': '等差数列：an = a₁ + (n-1)d\n等比数列：an = a₁ × q^(n-1)\n斐波那契：an = a(n-1) + a(n-2)',
+            '年龄问题': '年龄差不变：两人年龄差 = 常数\n设年龄差为d，则 n年后：(父亲±n) = n × (儿子±n) + d',
+            '浓度问题': '溶质 = 溶液 × 浓度\n蒸发水：溶质不变\n加溶质：溶液不变',
+            '排列组合': '排列 A(n,m) = n! / (n-m)!\n组合 C(n,m) = n! / (m!(n-m)!)\n注意：排列讲顺序，组合不讲顺序',
+            '比例问题': 'a:b = c:d → ad = bc\n正比例：a/b = 常数\n反比例：a×b = 常数',
+            '时钟问题': '分针：每分钟走6度\n时针：每分钟走0.5度\n夹角 = |时针 - 分针| × 0.5',
+            '植树问题': '两端都种：棵树 = 段数 + 1\n只种一端：棵树 = 段数\n两端都不种：棵树 = 段数 - 1',
+            '容斥问题': 'A∪B = A + B - A∩B\nA∪B∪C = A+B+C - AB-AC-BC + ABC',
+            // ===== 判断推理 =====
+            '图形推理-位置': '常见规律：平移、旋转、翻转\n观察方向、距离、角度变化',
+            '图形推理-数量': '数点、数线、数角、数面\n素（元素种类/数量）',
+            '图形推理-对称': '轴对称：有一条对称轴\n中心对称：旋转180度重合',
+            '定义判断': '关键点：主体、客体、条件、结果\n逐一比对，排除不符合的选项',
+            '类比推理': '关系类型：因果、并列、包含、对应\n造句法：代入验证',
+            '逻辑推理-翻译推理': '充分条件：P→Q（肯定P必肯定Q）\n必要条件：Q←P（Q是P的必要条件）',
+            '逻辑推理-削弱加强': '削弱：否定论点/论据/论证关系\n加强：肯定论点/补充论据/加强论证',
+            // ===== 言语理解 =====
+            '选词填空': '辨析词语：语义轻重、感情色彩、搭配对象\n语境分析：前后照应、递进、转折',
+            '阅读理解-主旨': '找关键句：首句、尾句、转折句\n概括段落大意，排除片面选项',
+            '阅读理解-细节': '回到原文逐一核对\n注意：无中生有、偷换概念、过度推断'
         };
 
         // ============ 状态 ============
@@ -820,12 +844,13 @@
         }
 
         function startDailyChallenge() {
+            // 按实际题库数量动态取题，不再写死数字
             const allQuestions = [
-                ...questions.changshi.slice(0, 4),
-                ...questions.yanyu.slice(0, 5),
-                ...questions.shuliang.slice(0, 3),
-                ...questions.panduan.slice(0, 4),
-                ...questions.ziliao.slice(0, 4)
+                ...questions.changshi.slice(0, Math.min(4, questions.changshi.length)),
+                ...questions.yanyu.slice(0, Math.min(5, questions.yanyu.length)),
+                ...questions.shuliang.slice(0, Math.min(3, questions.shuliang.length)),
+                ...questions.panduan.slice(0, Math.min(4, questions.panduan.length)),
+                ...questions.ziliao.slice(0, Math.min(4, questions.ziliao.length))
             ];
             if (allQuestions.length === 0) {
                 alert('题库加载中，请稍后再试！');
@@ -902,19 +927,32 @@
                 userData.fastestTimeMs = timeSpent * 1000;
             }
 
+            // 错题去重：错误次数+1 或 新增
             if (!isCorrect) {
-                userData.wrongQuestions.push({
-                    id: q.id || `${currentModule}_${currentIndex}`,
-                    module: currentModule,
-                    question: q.question,
-                    options: q.options,
-                    answer: q.answer,
-                    wrongAnswer: selectedAnswer,
-                    explanation: q.explanation,
-                    knowledge: q.knowledge,
-                    timestamp: Date.now()
-                });
+                const qid = q.id || `${currentModule}_${currentIndex}`;
+                const existing = userData.wrongQuestions.find(w => w.id === qid);
+                if (existing) {
+                    existing.errorCount = (existing.errorCount || 1) + 1;
+                    existing.wrongAnswer = selectedAnswer;
+                    existing.timestamp = Date.now();
+                } else {
+                    userData.wrongQuestions.push({
+                        id: qid,
+                        module: currentModule,
+                        question: q.question,
+                        options: q.options,
+                        answer: q.answer,
+                        wrongAnswer: selectedAnswer,
+                        explanation: q.explanation,
+                        knowledge: q.knowledge,
+                        errorCount: 1,
+                        timestamp: Date.now()
+                    });
+                }
             }
+
+            // 连续打卡：每次做题都检查
+            checkStreak();
 
             userData.history.push({ date: new Date().toISOString(), module: currentModule, correct: isCorrect, timeMs: timeSpent * 1000 });
             saveToStorage();
@@ -1076,7 +1114,7 @@
                     <div class="wrong-item">
                         <div class="wrong-item-header">
                             <strong>${w.question.substring(0, 50)}${w.question.length > 50 ? '...' : ''}</strong>
-                            <span style="color: var(--danger);">❌</span>
+                            <span style="color: var(--danger);">❌${w.errorCount > 1 ? '×'+w.errorCount : ''}</span>
                         </div>
                         <div class="wrong-item-module">${moduleNames[w.module] || '每日挑战'}</div>
                         ${w.knowledge ? `<span class="knowledge-tag">${w.knowledge}</span>` : ''}
@@ -1191,19 +1229,17 @@
 
         function checkStreak() {
             const today = new Date().toISOString().split('T')[0];
-            if (userData.lastPracticeDate !== today && userData.totalQuestions > 0) {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                if (userData.lastPracticeDate === yesterday.toISOString().split('T')[0]) {
-                    userData.streak++;
-                } else if (userData.lastPracticeDate !== null) {
-                    userData.streak = 1;
-                } else {
-                    userData.streak = 1;
-                }
-                userData.lastPracticeDate = today;
-                saveToStorage();
+            if (userData.lastPracticeDate === today) return; // 今天已打卡，不重复处理
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            if (userData.lastPracticeDate === yesterdayStr) {
+                userData.streak++;
+            } else {
+                userData.streak = 1; // 首次或断签，从1重新计数
             }
+            userData.lastPracticeDate = today;
+            saveToStorage();
         }
 
         function updateCountdown() {
@@ -1266,13 +1302,31 @@
             if (results.length === 0) {
                 document.getElementById('search-results').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">未找到相关题目</p>';
             } else {
-                document.getElementById('search-results').innerHTML = results.slice(0, 10).map(r => `
-                    <div class="wrong-item">
+                document.getElementById('search-results').innerHTML = results.slice(0, 10).map((r, i) => `
+                    <div class="wrong-item" onclick="jumpToQuestion('${r.module}', '${r.id}')">
                         <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.25rem;">${moduleNames[r.module]}</div>
                         <div>${r.question.substring(0, 60)}${r.question.length > 60 ? '...' : ''}</div>
                         ${r.knowledge ? `<span class="knowledge-tag">${r.knowledge}</span>` : ''}
                     </div>
                 `).join('');
+            }
+        }
+
+        function jumpToQuestion(module, qid) {
+            closeSearchModal();
+            // 跳转到对应模块并开始练习
+            currentModule = module;
+            const q = questions[module].find(q => q.id === qid);
+            if (q) {
+                currentQuestions = [q]; // 只练这一题
+                currentIndex = 0;
+                sessionCorrect = 0;
+                sessionTotal = 0;
+                sessionTimes = [];
+                sessionStartTime = Date.now();
+                switchTab('practice');
+                document.getElementById('module-name').textContent = moduleNames[module] + ' · 搜索跳转';
+                showQuestion();
             }
         }
 
