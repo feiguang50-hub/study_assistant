@@ -76,12 +76,22 @@ study_assistant/
 - [ ] 成就系统
 - [ ] 复习提醒
 
+## 在线使用
+
+**访问地址**：https://feiguang50-hub.github.io/study_assistant/
+
+手机/电脑直接打开链接即可使用！支持添加到手机桌面（类似App）。
+
 ## 使用方式
 
-1. 打开 GitHub Pages 地址
+1. 打开上面的链接
 2. 选择模块，开始刷题
-3. 随时退出，自动保存到你的 Gist
+3. 随时退出，进度自动保存（localStorage）
 4. 把知识点发给 Mavis，帮你整理入库
+
+## 数据同步（未来）
+
+目前数据保存在浏览器本地（localStorage）。未来会接入 GitHub Gist 实现多设备同步。
 
 ---
 
