@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -395,6 +395,7 @@
         <button class="tab active" onclick="switchTab('home')">刷题</button>
         <button class="tab" onclick="switchTab('wrong')">错题本</button>
         <button class="tab" onclick="switchTab('favorites')">收藏</button>
+        <button class="tab" onclick="switchTab('review')">复习</button>
         <button class="tab" onclick="switchTab('stats')">统计</button>
         <button class="tab" onclick="switchTab('achievements')">成就</button>
     </nav>
@@ -501,6 +502,19 @@
                 <h2 style="margin-bottom: 1rem;">⭐ 收藏夹</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="fav-count-text">暂无收藏</p>
                 <div class="wrong-list" id="fav-list"></div>
+            </div>
+        </div>
+
+        <!-- 复习队列 -->
+        <div id="review-view" style="display: none;">
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">📝 错题复习</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="review-count-text">暂无待复习题目</p>
+                <div class="wrong-list" id="review-list"></div>
+                <div id="no-review-tip" style="text-align:center;padding:2rem;color:var(--text-secondary);">
+                    <p style="margin-bottom:0.5rem;">🎉 暂时没有需要复习的错题</p>
+                    <p style="font-size:0.85rem;">做错的题会按遗忘曲线安排复习时间：<br>错1次→1天后、错2次→3天后、错3次→7天后</p>
+                </div>
             </div>
         </div>
 
@@ -617,7 +631,8 @@
             { id: 'total_100', name: '百题斩', desc: '累计完成100题', icon: '💯' },
             { id: 'total_500', name: '五百题王', desc: '累计完成500题', icon: '👑' },
             { id: 'daily_complete', name: '今日任务', desc: '完成每日挑战', icon: '📅' },
-            { id: 'collector', name: '题库收集者', desc: '题库总量达100题', icon: '📚' }
+            { id: 'collector', name: '题库收集者', desc: '题库总量达100题', icon: '📚' },
+            { id: 'review_master', name: '温故知新', desc: '累计复习错题20次', icon: '📖' }
         ];
 
         // 知识点库（按 tag 索引）
@@ -682,6 +697,7 @@
             notes: {},
             history: [],
             lastPracticeDate: null,
+            lastPractice: null, // { module, questionIds[], currentIndex }
             streak: 0,
             badges: [],
             dailyCompletedDate: null
@@ -697,6 +713,7 @@
         let sessionCorrect = 0;
         let sessionTotal = 0;
         let sessionTimes = [];
+        let isReviewMode = false;
 
         // ============ 初始化 ============
         async function init() {
@@ -709,6 +726,8 @@
             checkStreak();
             renderFavorites();
             updateDailyStatus();
+            renderReviewQueue();
+            updateModuleProgress();
         }
 
         async function loadQuestions() {
@@ -793,6 +812,94 @@
             reader.readAsText(file);
         }
 
+        // ============ 复习队列 ============
+        function getReviewDelay(errorCount) {
+            // 遗忘曲线：错1次→1天，2次→3天，3次及以上→7天
+            const delays = { 1: 1, 2: 3, 3: 7 };
+            return (delays[Math.min(errorCount, 3)] || 7) * 86400000;
+        }
+
+        function renderReviewQueue() {
+            const now = Date.now();
+            const due = userData.wrongQuestions.filter(w => w.nextReviewAt && w.nextReviewAt <= now);
+            const upcoming = userData.wrongQuestions
+                .filter(w => w.nextReviewAt && w.nextReviewAt > now)
+                .sort((a, b) => a.nextReviewAt - b.nextReviewAt)
+                .slice(0, 5);
+            const text = document.getElementById('review-count-text');
+            const list = document.getElementById('review-list');
+            const tip = document.getElementById('no-review-tip');
+
+            if (due.length === 0 && upcoming.length === 0) {
+                if (text) text.textContent = '暂无待复习题目';
+                if (list) list.innerHTML = '';
+                if (tip) tip.style.display = 'block';
+                return;
+            }
+            if (tip) tip.style.display = 'none';
+            if (text) text.textContent = `今日应复习 ${due.length} 道 · 即将到来 ${upcoming.length} 道`;
+
+            let html = '';
+            if (due.length > 0) {
+                html += '<div style="margin-bottom:1rem;"><strong style="color:var(--danger);">🔔 今日待复习（' + due.length + '道）</strong></div>';
+                html += due.map(w => `
+                    <div class="wrong-item" onclick="startReview('${w.id}')">
+                        <div class="wrong-item-header">
+                            <strong>${w.question.substring(0, 50)}${w.question.length > 50 ? '...' : ''}</strong>
+                        </div>
+                        <div class="wrong-item-module">${moduleNames[w.module] || '已收藏'} · 已错${w.errorCount}次</div>
+                        ${w.knowledge ? `<span class="knowledge-tag">${w.knowledge}</span>` : ''}
+                    </div>
+                `).join('');
+            }
+            if (upcoming.length > 0) {
+                html += '<div style="margin:1rem 0 0.5rem;"><strong style="color:var(--text-secondary);">即将到来</strong></div>';
+                html += upcoming.map(w => {
+                    const days = Math.ceil((w.nextReviewAt - now) / 86400000);
+                    return `<div class="wrong-item" style="opacity:0.7; cursor:default;">
+                        <div class="wrong-item-header">
+                            <strong>${w.question.substring(0, 50)}${w.question.length > 50 ? '...' : ''}</strong>
+                            <span style="font-size:0.8rem;color:var(--text-secondary);">${days}天后</span>
+                        </div>
+                        <div class="wrong-item-module">${moduleNames[w.module] || '已收藏'} · 已错${w.errorCount}次</div>
+                    </div>`;
+                }).join('');
+            }
+            if (list) list.innerHTML = html;
+        }
+
+        function startReview(qid) {
+            const w = userData.wrongQuestions.find(x => x.id === qid);
+            if (!w) return;
+            currentModule = w.module;
+            currentQuestions = [{
+                id: w.id, question: w.question, options: w.options,
+                answer: w.answer, explanation: w.explanation, knowledge: w.knowledge
+            }];
+            currentIndex = 0;
+            sessionCorrect = 0;
+            sessionTotal = 0;
+            sessionTimes = [];
+            sessionStartTime = Date.now();
+            isReviewMode = true; // 标记为复习模式，做对时计数
+            switchTab('practice');
+            document.getElementById('module-name').textContent = '📝 错题复习';
+            showQuestion();
+        }
+
+        // ============ 模块进度 ============
+        function updateModuleProgress() {
+            const mods = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
+            mods.forEach(mod => {
+                const done = new Set(userData.history.filter(h => h.module === mod).map(h => h.questionId).filter(Boolean)).size;
+                const total = questions[mod].length;
+                const bankEl = document.getElementById(`${mod}-bank`);
+                if (bankEl) {
+                    bankEl.textContent = `题库 ${total} 题 · 已做 ${done}`;
+                }
+            });
+        }
+
         // ============ 导航 ============
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => {
@@ -803,13 +910,14 @@
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
             }
-            const views = ['home', 'practice', 'wrong', 'favorites', 'stats', 'achievements'];
+            const views = ['home', 'practice', 'wrong', 'favorites', 'review', 'stats', 'achievements'];
             views.forEach(v => {
                 const el = document.getElementById(`${v}-view`);
                 if (el) el.style.display = v === tab ? 'block' : 'none';
             });
             if (tab === 'wrong') renderWrongList();
             if (tab === 'favorites') renderFavorites();
+            if (tab === 'review') renderReviewQueue();
             if (tab === 'stats') renderStats();
             if (tab === 'achievements') renderBadges();
         }
@@ -927,14 +1035,15 @@
                 userData.fastestTimeMs = timeSpent * 1000;
             }
 
-            // 错题去重：错误次数+1 或 新增
+            // 错题去重：错误次数+1 或 新增，设置复习时间
+            const qid = q.id || `${currentModule}_${currentIndex}`;
             if (!isCorrect) {
-                const qid = q.id || `${currentModule}_${currentIndex}`;
                 const existing = userData.wrongQuestions.find(w => w.id === qid);
                 if (existing) {
                     existing.errorCount = (existing.errorCount || 1) + 1;
                     existing.wrongAnswer = selectedAnswer;
                     existing.timestamp = Date.now();
+                    existing.nextReviewAt = Date.now() + getReviewDelay(existing.errorCount);
                 } else {
                     userData.wrongQuestions.push({
                         id: qid,
@@ -946,16 +1055,41 @@
                         explanation: q.explanation,
                         knowledge: q.knowledge,
                         errorCount: 1,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        nextReviewAt: Date.now() + getReviewDelay(1)
                     });
                 }
+            } else {
+                // 做对了，移除复习提醒
+                const existing = userData.wrongQuestions.find(w => w.id === qid);
+                if (existing) {
+                    existing.nextReviewAt = null;
+                    if (isReviewMode) {
+                        userData.reviewCount = (userData.reviewCount || 0) + 1;
+                        if (userData.reviewCount >= 20 && !userData.badges.includes('review_master')) {
+                            userData.badges.push('review_master');
+                            saveToStorage();
+                            setTimeout(() => alert('🎉 解锁成就：📖 温故知新（累计复习错题20次）'), 500);
+                        }
+                    }
+                }
             }
+            isReviewMode = false;
 
             // 连续打卡：每次做题都检查
             checkStreak();
 
-            userData.history.push({ date: new Date().toISOString(), module: currentModule, correct: isCorrect, timeMs: timeSpent * 1000 });
+            // 保存练习历史（含questionId用于进度追踪）
+            userData.history.push({
+                date: new Date().toISOString(),
+                module: currentModule,
+                correct: isCorrect,
+                timeMs: timeSpent * 1000,
+                questionId: qid
+            });
             saveToStorage();
+            renderReviewQueue(); // 实时更新复习队列状态
+            updateModuleProgress();
 
             // 显示结果
             document.querySelectorAll('.option').forEach((el, i) => {
@@ -1216,6 +1350,11 @@
                     newBadges.push('accuracy_80');
                 }
             });
+            // 检查复习成就
+            if (!userData.badges.includes('review_master')) {
+                userData.reviewCount = userData.reviewCount || 0;
+                // 复习模式做对时 reviewCount++（在 startReview 里处理）
+            }
             if (newBadges.length > 0) {
                 userData.badges.push(...newBadges);
                 saveToStorage();
@@ -1361,3 +1500,4 @@
     </script>
 </body>
 </html>
+
