@@ -396,6 +396,7 @@
         <button class="tab" onclick="switchTab('wrong')">错题本</button>
         <button class="tab" onclick="switchTab('favorites')">收藏</button>
         <button class="tab" onclick="switchTab('review')">复习</button>
+        <button class="tab" onclick="switchTab('weakness')">弱点</button>
         <button class="tab" onclick="switchTab('stats')">统计</button>
         <button class="tab" onclick="switchTab('achievements')">成就</button>
     </nav>
@@ -457,6 +458,40 @@
                 </div>
             </div>
 
+            <!-- 断点续练提示 -->
+            <div id="resume-card" class="card" style="margin-top: 1rem; display: none; border: 2px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📌 上次练习未完成</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);" id="resume-info"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="resumeLastPractice()" style="white-space: nowrap;">继续</button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 0.75rem;">🎯 自由练习</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem;">勾选模块，混合出题</p>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+                    <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="mix-cs" checked> 常识
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="mix-yy" checked> 言语
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="mix-sl"> 数量
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="mix-pd" checked> 判断
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="mix-zl" checked> 资料
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="startMixedPractice()" style="width: 100%;">开始练习</button>
+            </div>
+
             <div class="card" style="margin-top: 1.5rem;">
                 <h3 style="margin-bottom: 0.75rem;">📅 每日挑战</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;" id="daily-status">今天还没完成每日挑战哦！</p>
@@ -515,6 +550,15 @@
                     <p style="margin-bottom:0.5rem;">🎉 暂时没有需要复习的错题</p>
                     <p style="font-size:0.85rem;">做错的题会按遗忘曲线安排复习时间：<br>错1次→1天后、错2次→3天后、错3次→7天后</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- 弱点分析 -->
+        <div id="weakness-view" style="display: none;">
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">🎯 弱点分析</h2>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">根据你的错题记录，按知识点分类统计错误率</p>
+                <div id="weakness-content"></div>
             </div>
         </div>
 
@@ -728,6 +772,51 @@
             updateDailyStatus();
             renderReviewQueue();
             updateModuleProgress();
+            updateResumeCard();
+        }
+
+        function updateResumeCard() {
+            const card = document.getElementById('resume-card');
+            const info = document.getElementById('resume-info');
+            if (!card || !info) return;
+            const lp = userData.lastPractice;
+            if (lp && lp.questionIds && lp.questionIds.length > 0 && lp.currentIndex < lp.questionIds.length) {
+                const modName = moduleNames[lp.module] || lp.module;
+                const remaining = lp.questionIds.length - lp.currentIndex;
+                info.textContent = `${modName} · 剩余 ${remaining} 题`;
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        function resumeLastPractice() {
+            const lp = userData.lastPractice;
+            if (!lp || !lp.questionIds || lp.questionIds.length === 0) return;
+            if (lp.module === 'mixed') {
+                currentModule = 'mixed';
+                currentQuestions = lp.questionIds.map(qid => {
+                    for (const mod of ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao']) {
+                        const q = (questions[mod] || []).find(x => x.id === qid);
+                        if (q) return q;
+                    }
+                    return null;
+                }).filter(Boolean);
+            } else if (lp.module === 'daily') {
+                startDailyChallenge(); return;
+            } else {
+                currentModule = lp.module;
+                currentQuestions = (questions[lp.module] || []).filter(q => lp.questionIds.includes(q.id));
+            }
+            if (currentQuestions.length === 0) { alert('题库已更新，请重新开始练习'); userData.lastPractice = null; saveToStorage(); return; }
+            currentIndex = Math.min(lp.currentIndex, currentQuestions.length - 1);
+            sessionCorrect = 0;
+            sessionTotal = 0;
+            sessionTimes = [];
+            sessionStartTime = Date.now();
+            switchTab('practice');
+            document.getElementById('module-name').textContent = '📌 继续练习';
+            showQuestion();
         }
 
         async function loadQuestions() {
@@ -891,13 +980,56 @@
         function updateModuleProgress() {
             const mods = ['changshi', 'yanyu', 'shuliang', 'panduan', 'ziliao'];
             mods.forEach(mod => {
-                const done = new Set(userData.history.filter(h => h.module === mod).map(h => h.questionId).filter(Boolean)).size;
+                const done = new Set(userData.history.filter(h => h.module === mod && h.questionId).map(h => h.questionId)).size;
                 const total = questions[mod].length;
                 const bankEl = document.getElementById(`${mod}-bank`);
                 if (bankEl) {
                     bankEl.textContent = `题库 ${total} 题 · 已做 ${done}`;
                 }
             });
+        }
+
+        // ============ 弱点分析 ============
+        function renderWeaknessAnalysis() {
+            const container = document.getElementById('weakness-content');
+            if (!container) return;
+            const tagStats = {};
+            userData.wrongQuestions.forEach(w => {
+                const tag = w.knowledge || '未知';
+                if (!tagStats[tag]) tagStats[tag] = { wrong: 0, total: 0 };
+                tagStats[tag].wrong++;
+            });
+            userData.history.forEach(h => {
+                if (h.questionId) {
+                    // 尝试从各模块题库找到对应题目的知识点
+                    Object.entries(questions).forEach(([mod, qs]) => {
+                        const q = qs.find(x => (x.id || `${mod}_${qs.indexOf(x)}`) === h.questionId);
+                        if (q && q.knowledge) {
+                            if (!tagStats[q.knowledge]) tagStats[q.knowledge] = { wrong: 0, total: 0 };
+                            tagStats[q.knowledge].total++;
+                            if (!h.correct) tagStats[q.knowledge].wrong++;
+                        }
+                    });
+                }
+            });
+            const entries = Object.entries(tagStats).filter(([k, v]) => v.total > 0);
+            if (entries.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:2rem;">做题量还不够，继续加油！</p>';
+                return;
+            }
+            entries.sort((a, b) => (b[1].wrong / b[1].total) - (a[1].wrong / a[1].total));
+            container.innerHTML = entries.slice(0, 10).map(([tag, stat]) => {
+                const rate = stat.total > 0 ? Math.round((stat.wrong / stat.total) * 100) : 0;
+                const color = rate >= 60 ? 'var(--danger)' : rate >= 30 ? 'var(--warning)' : 'var(--success)';
+                return `<div style="margin-bottom:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.25rem;">
+                        <span>${tag}</span>
+                        <span style="color:${color};font-weight:600;">${rate}% 错</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${rate}%;background:${color}"></div></div>
+                    <div style="font-size:0.7rem;color:var(--text-secondary);">错${stat.wrong}道 / 共${stat.total}道</div>
+                </div>`;
+            }).join('');
         }
 
         // ============ 导航 ============
@@ -910,7 +1042,7 @@
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
             }
-            const views = ['home', 'practice', 'wrong', 'favorites', 'review', 'stats', 'achievements'];
+            const views = ['home', 'practice', 'wrong', 'favorites', 'review', 'weakness', 'stats', 'achievements'];
             views.forEach(v => {
                 const el = document.getElementById(`${v}-view`);
                 if (el) el.style.display = v === tab ? 'block' : 'none';
@@ -918,6 +1050,7 @@
             if (tab === 'wrong') renderWrongList();
             if (tab === 'favorites') renderFavorites();
             if (tab === 'review') renderReviewQueue();
+            if (tab === 'weakness') renderWeaknessAnalysis();
             if (tab === 'stats') renderStats();
             if (tab === 'achievements') renderBadges();
         }
@@ -932,6 +1065,13 @@
                 alert('题库加载中或暂无题目，请稍后再试！');
                 return;
             }
+            // 保存断点
+            userData.lastPractice = {
+                module,
+                questionIds: currentQuestions.map(q => q.id),
+                currentIndex: 0
+            };
+            saveToStorage();
             currentIndex = 0;
             sessionCorrect = 0;
             sessionTotal = 0;
@@ -948,6 +1088,32 @@
                 return tab;
             })();
             practiceTab.classList.add('active');
+            showQuestion();
+        }
+
+        function startMixedPractice() {
+            const modMap = { 'mix-cs': 'changshi', 'mix-yy': 'yanyu', 'mix-sl': 'shuliang', 'mix-pd': 'panduan', 'mix-zl': 'ziliao' };
+            const selected = Object.entries(modMap).filter(([id, mod]) => document.getElementById(id).checked).map(([, mod]) => mod);
+            if (selected.length === 0) { alert('请至少选择一个模块！'); return; }
+            let pool = [];
+            selected.forEach(mod => { pool = pool.concat(questions[mod] || []); });
+            if (pool.length === 0) { alert('题库加载中，请稍后再试！'); return; }
+            currentModule = 'mixed';
+            currentQuestions = shuffleArray(pool).slice(0, Math.min(PRACTICE_COUNT, pool.length));
+            // 保存断点
+            userData.lastPractice = {
+                module: 'mixed',
+                questionIds: currentQuestions.map(q => q.id),
+                currentIndex: 0
+            };
+            saveToStorage();
+            currentIndex = 0;
+            sessionCorrect = 0;
+            sessionTotal = 0;
+            sessionTimes = [];
+            sessionStartTime = Date.now();
+            switchTab('practice');
+            document.getElementById('module-name').textContent = '🎯 自由练习';
             showQuestion();
         }
 
@@ -1087,6 +1253,8 @@
                 timeMs: timeSpent * 1000,
                 questionId: qid
             });
+            // 更新断点进度
+            if (userData.lastPractice) userData.lastPractice.currentIndex = currentIndex;
             saveToStorage();
             renderReviewQueue(); // 实时更新复习队列状态
             updateModuleProgress();
@@ -1160,9 +1328,11 @@
             if (currentModule === 'daily') {
                 const today = new Date().toISOString().split('T')[0];
                 userData.dailyCompletedDate = today;
-                saveToStorage();
-                updateDailyStatus();
             }
+            // 练习完成，清除断点
+            userData.lastPractice = null;
+            saveToStorage();
+            updateDailyStatus();
             checkBadges();
         }
 
@@ -1174,6 +1344,7 @@
             switchTab('home');
             updateStats();
             updateModuleCards();
+            updateResumeCard();
         }
 
         function quitPractice() {
@@ -1500,4 +1671,5 @@
     </script>
 </body>
 </html>
+
 
