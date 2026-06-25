@@ -376,6 +376,24 @@
         .avg-time-label { font-size: 0.7rem; color: var(--text-secondary); }
         .favorite-btn { background: none; border: none; cursor: pointer; font-size: 1.5rem; padding: 0; }
         .favorite-btn.starred { color: #F59E0B; }
+        /* 设置页样式 */
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .setting-item:last-of-type { border-bottom: none; }
+        .setting-label { font-weight: 600; font-size: 0.95rem; }
+        .setting-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+        /* 开关 toggle */
+        .toggle { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; inset: 0; background: var(--border); border-radius: 26px; transition: 0.3s; cursor: pointer; }
+        .slider::before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle input:checked + .slider { background: var(--success); }
+        .toggle input:checked + .slider::before { transform: translateX(22px); }
         @media (max-width: 480px) {
             .module-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -397,6 +415,7 @@
         <div class="header-actions">
             <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌙</button>
             <button class="icon-btn" onclick="showSearch()" title="搜索">🔍</button>
+            <button class="icon-btn" onclick="showSettings()" title="设置">⚙️</button>
         </div>
     </header>
 
@@ -669,11 +688,77 @@
         </div>
     </div>
 
+    <!-- 设置弹窗 -->
+    <div class="modal hidden" id="settings-modal" onclick="closeSettings(event)">
+        <div class="modal-content" style="max-width: 420px;" onclick="event.stopPropagation()">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h3 style="margin:0;">⚙️ 设置</h3>
+                <button class="icon-btn" onclick="closeSettingsModal()" title="关闭">✕</button>
+            </div>
+
+            <!-- 答对自动下一题 -->
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">答对自动下一题</div>
+                    <div class="setting-desc">答对后无需点击，自动进入下一题</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="s-autoAdvance" onchange="updateSetting('autoAdvance',this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- 震动反馈 -->
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">震动反馈</div>
+                    <div class="setting-desc">答错时手机震动提醒</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="s-vibration" onchange="updateSetting('vibration',this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- 每次练习题数 -->
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">每次练习题数</div>
+                    <div class="setting-desc">模块练习和混练的出题数量</div>
+                </div>
+                <select id="s-practiceCount" onchange="updateSetting('practiceCount',+this.value)" style="padding:0.4rem 0.6rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.9rem;">
+                    <option value="5">5题</option>
+                    <option value="10">10题</option>
+                    <option value="15">15题</option>
+                    <option value="20">20题</option>
+                    <option value="25">25题</option>
+                </select>
+            </div>
+
+            <!-- 每日挑战难度 -->
+            <div class="setting-item" style="border:none;">
+                <div>
+                    <div class="setting-label">每日挑战难度</div>
+                    <div class="setting-desc">影响每日挑战的题目数量</div>
+                </div>
+                <select id="s-dailyDifficulty" onchange="updateSetting('dailyDifficulty',this.value)" style="padding:0.4rem 0.6rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.9rem;">
+                    <option value="easy">简单 (5题)</option>
+                    <option value="normal">普通 (10题)</option>
+                    <option value="hard">困难 (20题)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="closeSettingsModal()" style="width:100%;margin-top:1.5rem;">保存设置</button>
+        </div>
+    </div>
+
     <script>
         // ============ 配置 ============
         const moduleNames = { changshi: '常识判断', yanyu: '言语理解', shuliang: '数量关系', panduan: '判断推理', ziliao: '资料分析' };
         const timePerQuestion = { changshi: 40, yanyu: 50, shuliang: 60, panduan: 50, ziliao: 90 };
-        const PRACTICE_COUNT = 10; // 每次练习题数
+        // PRACTICE_COUNT 改为函数获取，读取用户设置
+        const getPracticeCount = () => userData.settings?.practiceCount || 10;
+        const getDailyCount = () => { const map = {easy:5,normal:10,hard:20}; return map[userData.settings?.dailyDifficulty] || 10; }
 
         // 成就定义
         const badgeDefinitions = [
@@ -757,7 +842,14 @@
             lastPractice: null, // { module, questionIds[], currentIndex }
             streak: 0,
             badges: [],
-            dailyCompletedDate: null
+            dailyCompletedDate: null,
+            // 用户设置
+            settings: {
+                autoAdvance: true,     // 答对自动下一题
+                practiceCount: 10,    // 每次练习题数
+                vibration: true,      // 震动反馈
+                dailyDifficulty: 'normal'  // 每日挑战难度: easy/normal/hard
+            }
         };
 
         let currentModule = null;
@@ -1111,7 +1203,7 @@
         function startModule(module) {
             currentModule = module;
             const available = questions[module];
-            const count = Math.min(PRACTICE_COUNT, available.length);
+            const count = Math.min(getPracticeCount(), available.length);
             currentQuestions = shuffleArray([...available]).slice(0, count);
             if (currentQuestions.length === 0) {
                 alert('题库加载中或暂无题目，请稍后再试！');
@@ -1151,7 +1243,7 @@
             selected.forEach(mod => { pool = pool.concat(questions[mod] || []); });
             if (pool.length === 0) { alert('题库加载中，请稍后再试！'); return; }
             currentModule = 'mixed';
-            currentQuestions = shuffleArray(pool).slice(0, Math.min(PRACTICE_COUNT, pool.length));
+            currentQuestions = shuffleArray(pool).slice(0, Math.min(getPracticeCount(), pool.length));
             // 保存断点
             userData.lastPractice = {
                 module: 'mixed',
@@ -1170,13 +1262,18 @@
         }
 
         function startDailyChallenge() {
-            // 按实际题库数量动态取题，不再写死数字
+            // 根据难度决定每模块取题数
+            const diff = userData.settings?.dailyDifficulty || 'normal';
+            const modCounts = diff === 'easy' ? [2, 1, 1, 1, 1] :
+                              diff === 'hard' ? [4, 5, 4, 4, 4] :
+                              [3, 2, 2, 2, 2]; // normal: 11题
+            const [cs, yy, sl, pd, zl] = modCounts;
             const allQuestions = [
-                ...questions.changshi.slice(0, Math.min(4, questions.changshi.length)),
-                ...questions.yanyu.slice(0, Math.min(5, questions.yanyu.length)),
-                ...questions.shuliang.slice(0, Math.min(3, questions.shuliang.length)),
-                ...questions.panduan.slice(0, Math.min(4, questions.panduan.length)),
-                ...questions.ziliao.slice(0, Math.min(4, questions.ziliao.length))
+                ...questions.changshi.slice(0, Math.min(cs, questions.changshi.length)),
+                ...questions.yanyu.slice(0, Math.min(yy, questions.yanyu.length)),
+                ...questions.shuliang.slice(0, Math.min(sl, questions.shuliang.length)),
+                ...questions.panduan.slice(0, Math.min(pd, questions.panduan.length)),
+                ...questions.ziliao.slice(0, Math.min(zl, questions.ziliao.length))
             ];
             if (allQuestions.length === 0) {
                 alert('题库加载中，请稍后再试！');
@@ -1241,6 +1338,11 @@
             const isCorrect = selectedAnswer === q.answer;
             sessionTotal++;
             if (isCorrect) sessionCorrect++;
+
+            // 震动反馈（答错时）
+            if (!isCorrect && userData.settings?.vibration && navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
 
             if (currentModule !== 'daily') {
                 userData.modules[currentModule].total++;
@@ -1335,6 +1437,11 @@
             document.getElementById('explanation-box').style.display = 'block';
             document.getElementById('submit-btn').textContent = currentIndex < currentQuestions.length - 1 ? '下一题 →' : '完成';
             document.getElementById('submit-btn').onclick = nextQuestion;
+
+            // 答对自动下一题
+            if (isCorrect && userData.settings?.autoAdvance && currentIndex < currentQuestions.length - 1) {
+                setTimeout(() => nextQuestion(), 1200);
+            }
         }
 
         function nextQuestion() {
@@ -1698,6 +1805,30 @@
             const btn = document.querySelector('.icon-btn');
             btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
             localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // ============ 设置页 ============
+        function showSettings() {
+            // 兼容老用户数据（没有 settings 字段）
+            if (!userData.settings) {
+                userData.settings = { autoAdvance: true, practiceCount: 10, vibration: true, dailyDifficulty: 'normal' };
+                saveToStorage();
+            }
+            const s = userData.settings;
+            document.getElementById('s-autoAdvance').checked = s.autoAdvance;
+            document.getElementById('s-vibration').checked = s.vibration;
+            document.getElementById('s-practiceCount').value = s.practiceCount;
+            document.getElementById('s-dailyDifficulty').value = s.dailyDifficulty;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function closeSettings(e) { if (e && e.target !== e.currentTarget) return; closeSettingsModal(); }
+        function updateSetting(key, value) {
+            if (!userData.settings) userData.settings = {};
+            userData.settings[key] = value;
+            saveToStorage();
+            // 震动测试
+            if (key === 'vibration' && value && navigator.vibrate) navigator.vibrate(50);
         }
 
         // ============ 工具 ============
