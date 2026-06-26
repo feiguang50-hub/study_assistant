@@ -44,10 +44,14 @@ MODULE_NAMES = {
 
 def parse_csv(csv_text):
     """解析 CSV，返回题目列表"""
-    # 去掉 BOM
+    # 去掉 BOM（文件可能带 BOM）
     if csv_text.startswith('\ufeff'):
         csv_text = csv_text[1:]
-    reader = csv.DictReader(io.StringIO(csv_text))
+    # 用显式字段名，避免表头格式问题
+    fieldnames = ['id', 'type', 'knowledge', 'question', 'options', 'answer', 'explanation']
+    reader = csv.DictReader(io.StringIO(csv_text), fieldnames=fieldnames)
+    # 第一行是表头，跳过
+    next(reader, None)
     questions = []
     for row in reader:
         # options 用 ||| 分隔
